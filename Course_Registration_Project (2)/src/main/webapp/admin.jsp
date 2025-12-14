@@ -1,9 +1,14 @@
-<%@ page import="com.example.cms.dao.CourseDAO,com.example.cms.model.Course,com.example.cms.model.User,java.util.*" %>
+<%@ page import="com.example.cms.dao.CourseDAO,com.example.cms.dao.UserDAO,com.example.cms.model.Course,com.example.cms.model.User,java.util.*" %>
 <%@ page contentType="text/html;charset=UTF-8" %>
+
 <%
     User user = (User) session.getAttribute("user");
     CourseDAO dao = new CourseDAO();
+    UserDAO userDAO = new UserDAO();
+    List<Integer> teacherIds = userDAO.getAllIdsByRole("teacher");
+    String message = (String) request.getAttribute("message");
 %>
+
 <!DOCTYPE html>
 <html>
 <head>
@@ -15,17 +20,14 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
 
     <style>
-        /* ===== Background (same as index & student) ===== */
         body {
             background: linear-gradient(135deg, #1e3c72, #2a5298);
             min-height: 100vh;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            color: #212529;
             position: relative;
             overflow-x: hidden;
         }
 
-        /* abstract shapes */
         body::before,
         body::after {
             content: "";
@@ -50,14 +52,13 @@
             right: -200px;
         }
 
-        /* ===== Navbar ===== */
         .navbar {
             background: linear-gradient(135deg, #0097a7, #00bcd4);
         }
 
         .navbar-brand {
-            font-weight: 600;
             color: #fff !important;
+            font-weight: 600;
         }
 
         .btn-logout {
@@ -69,7 +70,6 @@
             background: rgba(255,255,255,0.15);
         }
 
-        /* ===== Layout ===== */
         .dashboard-container {
             padding-top: 40px;
             padding-bottom: 60px;
@@ -77,7 +77,6 @@
             z-index: 1;
         }
 
-        /* ===== Cards ===== */
         .card {
             border-radius: 16px;
             background: #ffffffdd;
@@ -87,26 +86,21 @@
 
         .card-header {
             background: linear-gradient(135deg, #0097a7, #00bcd4);
-            color: #fff;
+            color: white;
             font-weight: 600;
             font-size: 1.25rem;
             text-align: center;
-            border-top-left-radius: 16px;
-            border-top-right-radius: 16px;
         }
 
-        /* ===== Buttons ===== */
         .btn-primary {
             background: #0097a7;
             border: none;
-            font-weight: 500;
         }
 
         .btn-primary:hover {
             background: #00bcd4;
         }
 
-        /* ===== Tables ===== */
         .table {
             background: #ffffff;
             border-radius: 12px;
@@ -118,21 +112,8 @@
         }
 
         .table th {
+            color: #005b66;
             font-weight: 600;
-            color: #005b66;
-            border-bottom: none;
-        }
-
-        .table td {
-            vertical-align: middle;
-        }
-
-        /* ===== Alerts ===== */
-        .alert-info {
-            background: #eaf6fa;
-            color: #005b66;
-            border: none;
-            border-radius: 10px;
         }
     </style>
 </head>
@@ -152,7 +133,7 @@
 
 <div class="container dashboard-container">
 
-    <!-- Add Course Card -->
+    <!-- Add Course -->
     <div class="card mb-4">
         <div class="card-header">Add Course & Assign Teacher</div>
         <div class="card-body">
@@ -162,33 +143,33 @@
                     <input class="form-control" name="courseName" required>
                 </div>
                 <div class="col-md-4">
-                    <label class="form-label">Teacher ID</label>
-                    <input class="form-control" name="teacherId" type="number" required>
+                    <label class="form-label">Teacher</label>
+                    <select class="form-control" name="teacherId" required>
+                        <option value="">-- Select Teacher --</option>
+                        <% for (Integer id : teacherIds) { 
+                               String teacherName = userDAO.getNameById(id); %>
+                            <option value="<%= id %>"><%= id %> - <%= teacherName %></option>
+                        <% } %>
+                    </select>
                 </div>
                 <div class="col-md-2">
                     <button class="btn btn-primary w-100">Add</button>
                 </div>
             </form>
-
-            <% if (request.getAttribute("message") != null) { %>
-                <div class="alert alert-info mt-3 text-center">
-                    <%= request.getAttribute("message") %>
-                </div>
-            <% } %>
         </div>
     </div>
 
-    <!-- Course Table -->
+    <!-- All Courses -->
     <div class="card">
         <div class="card-header">All Courses</div>
         <div class="card-body">
             <table class="table table-hover">
                 <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Course Name</th>
-                        <th>Teacher ID</th>
-                    </tr>
+                <tr>
+                    <th>ID</th>
+                    <th>Course Name</th>
+                    <th>Teacher ID</th>
+                </tr>
                 </thead>
                 <tbody>
                 <% for (Course c : dao.getAll()) { %>
@@ -205,6 +186,42 @@
 
 </div>
 
+<!-- ===== POPUP MODAL ===== -->
+<div class="modal fade" id="resultModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 16px;">
+
+            <div class="modal-header text-white"
+                 style="background: linear-gradient(135deg, #0097a7, #00bcd4);">
+                <h5 class="modal-title">Course Status</h5>
+            </div>
+
+            <div class="modal-body text-center p-4">
+                <i class="bi bi-info-circle-fill fs-1 text-info mb-3"></i>
+                <p class="fs-5 mb-0"><%= message %></p>
+            </div>
+
+            <div class="modal-footer justify-content-center">
+                <button class="btn btn-primary px-4" onclick="goBack()">OK</button>
+            </div>
+
+        </div>
+    </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+    function goBack() {
+        window.location.href = "<%= request.getContextPath() %>/admin.jsp";
+    }
+
+    <% if (message != null) { %>
+        // Explicitly create and show the modal
+        var resultModal = new bootstrap.Modal(document.getElementById('resultModal'), {});
+        resultModal.show();
+    <% } %>
+</script>
+
 </body>
 </html>

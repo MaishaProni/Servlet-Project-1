@@ -1,7 +1,11 @@
 package com.example.cms.dao;
 
 import com.example.cms.model.User;
+
 import java.sql.*;
+import java.util.List;
+import java.util.ArrayList;
+
 
 public class UserDAO {
     public User authenticate(String username, String password) {
@@ -46,4 +50,40 @@ public class UserDAO {
 
         return null;
     }
+    public List<Integer> getAllIdsByRole(String role) {
+        List<Integer> ids = new ArrayList<>();
+        String sql = "SELECT id FROM users WHERE role=?";
+        try (Connection con = DBUtil.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+
+            ps.setString(1, role);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    ids.add(rs.getInt("id"));
+                }
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return ids;
+    }
+    public String getNameById(int userId) {
+        String sql = "SELECT username FROM users WHERE id=?";
+        try (Connection con = DBUtil.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+
+            ps.setInt(1, userId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getString("username");
+                }
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null; // null if user not found
+    }
+
 }

@@ -1,11 +1,14 @@
 <%@ page import="com.example.cms.dao.CourseDAO,com.example.cms.dao.RegistrationDAO,com.example.cms.model.User,com.example.cms.model.Course,java.util.*" %>
 <%@ page contentType="text/html;charset=UTF-8" %>
+
 <%
     User user = (User) session.getAttribute("user");
     CourseDAO cdao = new CourseDAO();
     RegistrationDAO rdao = new RegistrationDAO();
     List<Integer> myCourses = rdao.getCourseIdsByStudent(user.getId());
+    String message = (String) request.getAttribute("message");
 %>
+
 <!DOCTYPE html>
 <html>
 <head>
@@ -17,17 +20,14 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
 
     <style>
-        /* ===== Background (same family as index) ===== */
         body {
             background: linear-gradient(135deg, #1e3c72, #2a5298);
             min-height: 100vh;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            color: #212529;
             position: relative;
             overflow-x: hidden;
         }
 
-        /* soft abstract shapes like index */
         body::before,
         body::after {
             content: "";
@@ -52,14 +52,13 @@
             right: -200px;
         }
 
-        /* ===== Navbar ===== */
         .navbar {
             background: linear-gradient(135deg, #0097a7, #00bcd4);
         }
 
         .navbar-brand {
-            font-weight: 600;
             color: #fff !important;
+            font-weight: 600;
         }
 
         .btn-logout {
@@ -71,7 +70,6 @@
             background: rgba(255,255,255,0.15);
         }
 
-        /* ===== Layout ===== */
         .dashboard-container {
             padding-top: 40px;
             padding-bottom: 60px;
@@ -79,7 +77,6 @@
             z-index: 1;
         }
 
-        /* ===== Cards ===== */
         .card {
             border-radius: 16px;
             background: #ffffffdd;
@@ -89,26 +86,21 @@
 
         .card-header {
             background: linear-gradient(135deg, #0097a7, #00bcd4);
-            color: #fff;
+            color: white;
             font-weight: 600;
             font-size: 1.25rem;
             text-align: center;
-            border-top-left-radius: 16px;
-            border-top-right-radius: 16px;
         }
 
-        /* ===== Buttons ===== */
         .btn-primary {
             background: #0097a7;
             border: none;
-            font-weight: 500;
         }
 
         .btn-primary:hover {
             background: #00bcd4;
         }
 
-        /* ===== List ===== */
         .list-group-item {
             border-radius: 10px;
             margin-bottom: 8px;
@@ -119,15 +111,6 @@
         .badge {
             background: #bfeaf0;
             color: #005b66;
-            font-weight: 500;
-        }
-
-        /* ===== Alerts ===== */
-        .alert-info {
-            background: #eaf6fa;
-            color: #005b66;
-            border: none;
-            border-radius: 10px;
         }
     </style>
 </head>
@@ -145,10 +128,10 @@
     </div>
 </nav>
 
-<!-- Dashboard -->
+<!-- Main Dashboard -->
 <div class="container dashboard-container">
 
-    <!-- Register Card -->
+    <!-- Register Course -->
     <div class="card mb-4">
         <div class="card-header">Register for a Course</div>
         <div class="card-body">
@@ -167,12 +150,6 @@
                     <button class="btn btn-primary w-100">Register</button>
                 </div>
             </form>
-
-            <% if (request.getAttribute("message") != null) { %>
-                <div class="alert alert-info mt-3 text-center">
-                    <%= request.getAttribute("message") %>
-                </div>
-            <% } %>
         </div>
     </div>
 
@@ -184,20 +161,60 @@
                 <% for (Integer id : myCourses) {
                        Course c = cdao.getById(id);
                        if (c != null) { %>
-                    <li class="list-group-item d-flex justify-content-between align-items-center">
-                        <span>
-                            <strong><%= c.getCourseName() %></strong><br>
-                            <small class="text-muted">Course ID: <%= id %></small>
-                        </span>
-                        <span class="badge">TID: <%= c.getTeacherId() %></span>
-                    </li>
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    <span>
+                        <strong><%= c.getCourseName() %></strong><br>
+                        <small class="text-muted">Course ID: <%= id %></small>
+                    </span>
+                    <span class="badge">TID: <%= c.getTeacherId() %></span>
+                </li>
                 <% }} %>
             </ul>
         </div>
     </div>
-
 </div>
 
+<!-- ===== POPUP MODAL ===== -->
+<% if (message != null) { %>
+<div class="modal fade" id="resultModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 16px;">
+
+            <div class="modal-header text-white"
+                 style="background: linear-gradient(135deg, #0097a7, #00bcd4);">
+                <h5 class="modal-title">Registration Status</h5>
+            </div>
+
+            <div class="modal-body text-center p-4">
+                <i class="bi bi-info-circle-fill fs-1 text-info mb-3"></i>
+                <p class="fs-5 mb-0"><%= message %></p>
+            </div>
+
+            <div class="modal-footer justify-content-center">
+                <button class="btn btn-primary px-4" onclick="goBack()">
+                    OK
+                </button>
+            </div>
+
+        </div>
+    </div>
+</div>
+<% } %>
+
+<!-- Bootstrap JS -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+    function goBack() {
+    	window.location.href = "<%= request.getContextPath() %>/student.jsp";
+
+    }
+
+    <% if (message != null) { %>
+        const modal = new bootstrap.Modal(document.getElementById("resultModal"));
+        modal.show();
+    <% } %>
+</script>
+
 </body>
 </html>
